@@ -140,6 +140,7 @@ class BillingConfig(CremeAppConfig):
             bricks.BillingPrettyAddressBrick,
             bricks.BillingExportersBrick,
             bricks.PersonsStatisticsBrick,
+            bricks.OrderLinesBrick,
         ).register_invalid_models(
             self.ProductLine, self.ServiceLine,
         ).register_hat(

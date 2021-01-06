@@ -399,6 +399,18 @@ QUnit.test('fallbacks.Object.isNumber', function() {
     equal(Object.isNumber(Number(12.154)), true);
 });
 
+QUnit.test('fallbacks.Object.fromEntries', function() {
+    deepEqual({}, Object.fromEntries([]));
+    deepEqual({}, (function() {
+        return Object.fromEntries(arguments);
+    })());
+
+    deepEqual({A: 'a', B: 12}, Object.fromEntries([['A', 'a'], ['B', 12]]));
+    deepEqual({A: 'a', B: 12}, (function() {
+        return Object.fromEntries(arguments);
+    })(['A', 'a'], ['B', 12]));
+});
+
 QUnit.test('fallbacks.Array.indexOf', function() {
     equal(typeof Array.prototype.indexOf, 'function');
     equal(typeof [].indexOf, 'function');

@@ -32,56 +32,62 @@ creme.MenuEditor = creme.component.Component.sub({
         element.append(this._input);
 
         // TODO: error if not initial data ?
-        if (options.initialSelector) {
-            self._appendEntries(
-                JSON.parse(creme.utils.JSON.readScriptText(element.find(options.initialSelector)))
-            );
-        }
+        Assert.not(Object.isEmpty(options.initialSelector), 'MenuEditor missing options.initialSelector');
 
-        function onSortEventHandler(event) {
-            self._updateValue();
-        };
+        this._appendEntries(
+            JSON.parse(creme.utils.JSON.readScriptText(element.find(options.initialSelector)))
+        );
 
         this._entries = new Sortable(
-            element.find('.menu-edit-entries').get(0),
-            {
+            element.find('.menu-edit-entries').get(0), {
                 group: element.attr('id'),
                 animation: 150,
-                onSort: onSortEventHandler
+                onSort: this._onSort.bind(this)
             }
         );
 
         // ----
         var regularChoices = [];
-        if (options.regularChoicesSelector) {
+        if (Object.isNotEmpty(options.regularChoicesSelector)) {
             regularChoices = JSON.parse(
                 creme.utils.JSON.readScriptText(element.find(options.regularChoicesSelector))
             );
         }
 
-        var regularButton = element.find('.new-regular-entries');
-        if (regularChoices) {
-            regularButton.on('click', function(event) {
+        var regularButtons = element.find('.new-regular-entries');
+        if (Object.isNotEmpty(regularChoices)) {
+            regularButtons.on('click', function(event) {
                 self._regularEntriesDialog(regularChoices).open();
             });
         } else {
-            regularButton.remove();
+            regularButtons.remove();
         }
 
-        // --
-        element.find('.new-extra-entry').each(function(i, node) {
-            var button = $(node);
+        element.on('click', '.new-extra-entry', function(event) {
+            self._specialEntriesDialog($(this)).open();
+        });
 
-            button.on('click', function(event) {
-                self._specialEntriesDialog(button).open();
-            });
+        element.on('click', '.menu-edit-entry button', function(e) {
+            e.preventDefault();
+            $(this).parent('.menu-edit-entry:first').remove();
+            self._onSort();
         });
     },
 
-    _appendEntries: function(entriesInfo) {
-        var self = this;
+    _appendEntries: function(entries) {
         var divs = this._element.find('.menu-edit-entries');
 
+        divs.append(entries.map(function(entry) {
+            var res = (
+                '<div class="menu-edit-entry menu-edit-entry-${id}" data-value="${value}">${label}</div>'
+            ).template({
+                id: entry.value.id,
+                value: JSON.stringify(entry.value).escapeHTML(),
+                label: entry.label.escapeHTML()
+            });
+            return res;
+        }).join(''));
+/*
         entriesInfo.forEach(function(entryInfo) {
             // NB: text() performs an escaping so we're protected against malicious labels
             var entryDiv = $('<div>').attr('class', 'menu-edit-entry menu-edit-entry-' + entryInfo.value.id)
@@ -99,16 +105,20 @@ creme.MenuEditor = creme.component.Component.sub({
             );
             divs.append(entryDiv);
         });
-
-        this._updateValue();
+*/
+        this._onSort();
     },
 
-    _updateValue: function() {
+    _onSort: function(event) {
         var values = $.map(this._element.find('.menu-edit-entry'), function(e) {
             return JSON.parse($(e).attr('data-value'));
         });
 
         this._input.val(JSON.stringify(values));
+    },
+
+    value: function() {
+        return JSON.parse(this._input.val());
     },
 
     _regularEntriesDialog: function(choices) {

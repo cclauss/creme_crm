@@ -171,7 +171,7 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
         self.assertEqual(_('Save the modifications'), context.get('submit_label'))
 
         # ---
-        title       += '_edited'
+        title += '_edited'
         description += '_edited'
         response = self.client.post(
             url,
@@ -288,16 +288,16 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
         self.assertEqual(2, len(page.object_list))
         self.assertSetEqual({*todos}, {*page.object_list})
 
-    @staticmethod
-    def _oldify_todo(todo):
-        cdate = todo.creation_date
-        todo.creation_date = cdate - timedelta(days=1)
-        todo.save()
+    # @staticmethod
+    # def _oldify_todo(todo):
+    #     cdate = todo.creation_date
+    #     todo.creation_date = cdate - timedelta(days=1)
+    #     todo.save()
 
     def test_function_field01(self):
         funf = function_field_registry.get(CremeEntity, 'assistants-get_todos')
         self.assertIsInstance(funf, TodosField)
-        self.assertEqual('<ul></ul>', funf(self.entity, self.user).for_html())
+        self.assertHTMLEqual('<ul></ul>', funf(self.entity, self.user).for_html())
 
         # ---
         field_class = funf.search_field_builder
@@ -323,8 +323,10 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
         )
 
     def test_function_field02(self):
-        funf = function_field_registry.get(CremeEntity, 'assistants-get_todos')
-        self._oldify_todo(self._create_todo('Todo01', 'Description01'))
+        # funf = function_field_registry.get(CremeEntity, 'assistants-get_todos')
+        funf = TodosField()
+        # self._oldify_todo(self._create_todo('Todo01', 'Description01'))
+        self._create_todo('Todo01', 'Description01')
         self._create_todo('Todo02', 'Description02')
 
         todo3 = self._create_todo('Todo03', 'Description03')
@@ -334,20 +336,39 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
         with self.assertNumQueries(1):
             result = funf(self.entity, self.user)
 
-        self.assertEqual('<ul><li>Todo02</li><li>Todo01</li></ul>', result.for_html())
-
-        # limit to 3 ToDos
-        # self._create_todo('Todo03', 'Description03')
-        # self._create_todo('Todo04', 'Description04')
-        # self.assertHTMLEqual(
-        #     '<ul><li>Todo04</li><li>Todo03</li><li>Todo02</li></ul>',
-        #     funf(self.entity)
-        # )
+        self.assertHTMLEqual('<ul><li>Todo02</li><li>Todo01</li></ul>', result.for_html())
 
     def test_function_field03(self):
+        "Limit to X ToDos."
+        funf = TodosField()
+
+        self.assertTrue(hasattr(funf, 'limit'))
+        funf.limit = 3
+
+        todos = [
+            self._create_todo(f'Todo#{i}', f'Description {i}')
+            for i in range(1, 7)
+        ]
+
+        todo4 = todos[3]
+        todo4.is_ok = True
+        todo4.save()
+
+        self.assertHTMLEqual(
+            '<ul>'
+            '<li>Todo#6</li>'
+            '<li>Todo#5</li>'
+            '<li>Todo#3</li>'
+            '<li>…</li>'
+            '</ul>',
+            funf(self.entity, self.user).for_html(),
+        )
+
+    def test_function_field04(self):
         "Prefetch with 'populate_entities()'."
         user = self.user
-        self._oldify_todo(self._create_todo('Todo01', 'Description01'))
+        # self._oldify_todo(self._create_todo('Todo01', 'Description01'))
+        self._create_todo('Todo01', 'Description01')
         self._create_todo('Todo02', 'Description02')
 
         todo3 = self._create_todo('Todo03', 'Description03')
@@ -357,7 +378,9 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
         entity02 = CremeEntity.objects.create(user=user)
         self._create_todo('Todo04', 'Description04', entity=entity02)
 
-        funf = function_field_registry.get(CremeEntity, 'assistants-get_todos')
+        # funf = function_field_registry.get(CremeEntity, 'assistants-get_todos')
+        funf = TodosField()
+        funf.limit = 10
 
         with self.assertNumQueries(1):
             funf.populate_entities([self.entity, entity02], user)
@@ -366,8 +389,52 @@ class TodoTestCase(AssistantsTestCase, BrickTestCaseMixin):
             result1 = funf(self.entity, user)
             result2 = funf(entity02, user)
 
-        self.assertEqual('<ul><li>Todo02</li><li>Todo01</li></ul>', result1.for_html())
-        self.assertEqual('<ul><li>Todo04</li></ul>',                result2.for_html())
+        self.assertHTMLEqual('<ul><li>Todo02</li><li>Todo01</li></ul>', result1.for_html())
+        self.assertHTMLEqual('<ul><li>Todo04</li></ul>',                result2.for_html())
+
+    def test_function_field05(self):
+        "Prefetch with 'populate_entities()' + limit."
+        user = self.user
+        entity2 = CremeEntity.objects.create(user=user)
+
+        todos = [
+            self._create_todo(f'Todo#{i}', f'Description {i}', entity=entity)
+            for i, entity in enumerate(
+                [self.entity] * 6 + [entity2] * 2,
+                start=1,
+            )
+        ]
+
+        todo4 = todos[3]
+        todo4.is_ok = True
+        todo4.save()
+
+        funf = TodosField()
+        funf.limit = 3
+
+        with self.assertNumQueries(1):
+            funf.populate_entities([self.entity, entity2], user)
+
+        with self.assertNumQueries(0):
+            result1 = funf(self.entity, user)
+            result2 = funf(entity2, user)
+
+        self.assertHTMLEqual(
+            '<ul>'
+            '<li>Todo#6</li>'
+            '<li>Todo#5</li>'
+            '<li>Todo#3</li>'
+            '<li>…</li>'
+            '</ul>',
+            result1.for_html(),
+        )
+        self.assertHTMLEqual(
+            '<ul>'
+            '<li>Todo#8</li>'
+            '<li>Todo#7</li>'
+            '</ul>',
+            result2.for_html(),
+        )
 
     def test_merge(self):
         def creator(contact01, contact02):

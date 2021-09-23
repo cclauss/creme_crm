@@ -1315,7 +1315,13 @@ CREME_GET_EMAIL_SSL_CERTFILE = ''
 # Path to a readable directory. Used by the fetcher 'filesystem'.
 # The contained files are used to create entity
 # (eg: the input 'ini' used .ini files) ; used files are deleted.
-CRUDITY_FILESYS_FETCHER_DIR = ''
+CRUDITY_FILESYS_FETCHER_DIR = ''  # TODO: remove
+
+# TODO: doc
+CRUDITY_FILESYS_FETCHER_DIRS = [
+    # '/home/creme/crud_import/ini/',
+    # '/home/creme/crud_import/csv/',
+]
 
 # CRUDITY_BACKENDS configures the backends (it's a list of dict)
 # Here a template of a crudity backend configuration:
@@ -1361,6 +1367,20 @@ CRUDITY_FILESYS_FETCHER_DIR = ''
 #     },
 # ]
 CRUDITY_BACKENDS = []
+
+# TODO: doc + complete
+CRUDITY_FETCHERS = [
+    # NB: see CRUDITY_FILESYS_FETCHER_DIRS
+    # 'creme.crudity.fetchers.filesystem.NEWFileSystemFetcher',
+    'creme.crudity.fetchers.pop.NEWPopFetcher',
+]
+
+# TODO: doc + complete
+CRUDITY_DECODERS = [
+    'creme.crudity.decoders.ini.IniDecoder',
+    'creme.crudity.decoders.xls.XLSDecoder',
+    # ...
+]
 
 # TICKETS ----------------------------------------------------------------------
 TICKETS_TICKET_MODEL   = 'tickets.Ticket'

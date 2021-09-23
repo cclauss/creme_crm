@@ -2,7 +2,7 @@
 
 ################################################################################
 #    Creme is a free/open-source Customer Relationship Management software
-#    Copyright (C) 2016-2021  Hybird
+#    Copyright (C) 2016-2022  Hybird
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
@@ -20,8 +20,8 @@
 
 import logging
 
+from django import forms
 from django.contrib.auth import get_user_model
-from django.forms import ModelChoiceField
 from django.utils.translation import gettext_lazy as _
 
 from creme.creme_core.forms.job import JobForm
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class CruditySynchronizeJobForm(JobForm):
-    user = ModelChoiceField(
+    user = forms.ModelChoiceField(
         label=_('Default owner user'),
         empty_label=None, queryset=None,
         help_text=_(

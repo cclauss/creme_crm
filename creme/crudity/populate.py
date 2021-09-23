@@ -2,7 +2,7 @@
 
 ################################################################################
 #    Creme is a free/open-source Customer Relationship Management software
-#    Copyright (C) 2009-2021  Hybird
+#    Copyright (C) 2009-2022  Hybird
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
@@ -26,19 +26,19 @@ from django.utils.translation import gettext as _
 
 from creme.creme_core.gui.menu import ContainerEntry, Separator1Entry
 from creme.creme_core.management.commands.creme_populate import BasePopulator
-from creme.creme_core.models import Job, MenuConfigItem, SettingValue
+from creme.creme_core.models import Job, MenuConfigItem  # SettingValue
 from creme.creme_core.utils.date_period import date_period_registry
 
 from . import menu
+# from .setting_keys import sandbox_key
 from .creme_jobs import crudity_synchronize_type
-from .setting_keys import sandbox_key
 
 
 class Populator(BasePopulator):
     dependencies = ['creme_core']
 
     def populate(self):
-        SettingValue.objects.get_or_create(key_id=sandbox_key.id, defaults={'value': False})
+        # SettingValue.objects.get_or_create(key_id=sandbox_key.id, defaults={'value': False})
 
         user = get_user_model().objects.get_admin()
         Job.objects.get_or_create(

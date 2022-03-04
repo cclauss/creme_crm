@@ -35,7 +35,7 @@ else:
         'FakeDocumentCategory', 'FakeDocument',
         'FakeFileComponent', 'FakeFileBag',
         'FakeImageCategory', 'FakeImage',
-        'FakeCivility', 'FakePosition', 'FakeSector', 'FakeAddress',
+        'FakeCivility', 'FakePosition', 'FakeSector', 'FakeAddress', 'FakeCountry',
         'FakeContact', 'FakeLegalForm', 'FakeOrganisation',
         'FakeActivityType', 'FakeActivity',
         'FakeMailingList', 'FakeEmailCampaign',
@@ -304,6 +304,21 @@ else:
         def get_related_entity(self):  # For generic views
             return self.entity
 
+    class FakeCountry(CremeModel):
+        name = models.CharField(_('Name'), max_length=100)
+
+        creation_label = _('Create a country')
+        save_label     = _('Save the country')
+
+        def __str__(self):
+            return self.name
+
+        class Meta:
+            app_label = 'creme_core'
+            verbose_name = 'Test country'
+            verbose_name_plural = 'Test countries'
+            ordering = ('name',)
+
     class FakeContact(CremeEntity):
         civility = models.ForeignKey(
             FakeCivility, verbose_name=_('Civility'), blank=True, null=True,
@@ -343,6 +358,9 @@ else:
             Language, verbose_name=_('Spoken language(s)'), blank=True,
             limit_choices_to=~Q(name__contains='[deprecated]'),
         )
+        preferred_countries = models.ManyToManyField(
+            FakeCountry, verbose_name=_('Preferred countries'), blank=True,
+        ).set_tags(clonable=False)
         address = models.ForeignKey(
             FakeAddress, verbose_name=_('Billing address'),
             blank=True, null=True, editable=False,

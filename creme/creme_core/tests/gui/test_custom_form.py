@@ -1236,6 +1236,7 @@ class FieldGroupListTestCase(CremeTestCase):
                 'birthday',
                 'image',
                 'languages',
+                'preferred_countries',
             ],
             [bfield.name for bfield in listified_blocks[1].bound_fields],
         )

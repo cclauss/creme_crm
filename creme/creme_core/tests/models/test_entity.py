@@ -29,6 +29,7 @@ from creme.creme_core.models import (
     CustomFieldString,
     FakeCivility,
     FakeContact,
+    FakeCountry,
     FakeImage,
     FakeImageCategory,
     FakeOrganisation,
@@ -131,13 +132,13 @@ class EntityTestCase(CremeTestCase):
         self.assertFalse(get_field('modified').get_tag(FieldTag.CLONABLE))
 
         field = get_field('first_name')
-        self.assertTrue(field.get_tag(FieldTag.CLONABLE))
         self.assertRaises(InvalidFieldTag, field.get_tag, 'stuff')
+        self.assertRaises(InvalidFieldTag, field.set_tags, stuff=True)
+        self.assertTrue(field.get_tag(FieldTag.CLONABLE))
 
         self.assertFalse(get_field('id').get_tag(FieldTag.CLONABLE))
         self.assertFalse(get_field('cremeentity_ptr').get_tag(FieldTag.CLONABLE))
-
-        self.assertRaises(InvalidFieldTag, field.set_tags, stuff=True)
+        self.assertFalse(get_field('preferred_countries').get_tag(FieldTag.CLONABLE))
 
     def test_fieldtags_viewable(self):
         naruto = FakeContact.objects.create(
@@ -226,7 +227,11 @@ class EntityTestCase(CremeTestCase):
         sakura  = CremeEntity.objects.create(user=self.user)
 
         image = FakeImage.objects.create(user=user, name='Naruto selfie')
-
+        create_country = FakeCountry.objects.create
+        countries = [
+            create_country(name="Land of Fire"),
+            create_country(name="Land of Wind"),
+        ]
         naruto = FakeContact.objects.create(
             user=user, civility=civility,
             first_name='Naruto', last_name='Uzumaki',
@@ -235,7 +240,10 @@ class EntityTestCase(CremeTestCase):
             email='naruto.uzumaki@konoha.jp',
             image=image,
         )
-        naruto.language = [language]
+        naruto.languages.add(language)
+        # self.assertEqual(1, naruto.languages.count())
+        naruto.preferred_countries.set(countries)
+        # self.assertEqual(2, naruto.preferred_countries.count())
 
         CremeProperty.objects.create(type=self.ptype01, creme_entity=naruto)
 
@@ -255,6 +263,7 @@ class EntityTestCase(CremeTestCase):
             self.assertEqual(getattr(naruto, attr), getattr(kage_bunshin, attr))
 
         self.assertSetEqual({*naruto.languages.all()}, {*kage_bunshin.languages.all()})
+        self.assertEqual(0, kage_bunshin.preferred_countries.count())
 
     def test_clone03(self):
         create_cf = partial(

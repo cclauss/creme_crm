@@ -1,0 +1,11 @@
+Bonjour,
+
+Vous recevez cet e-mail parce qu'une réinitialisation de votre mot de passe Crème CRM a été demandée.
+
+Merci de cliquer sur le lien ci-dessous pour choisir un nouveau mot de passe : {{protocol}}://{{domain}}{% url 'creme_core__password_reset_confirm' uidb64=uid token=token %}
+
+Voici votre identifiant au cas où vous l'auriez également oublié : {{user.username}}
+
+Merci de votre intérêt pour Crème CRM.
+
+L'équipe Hybird.

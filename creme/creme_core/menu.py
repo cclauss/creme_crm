@@ -29,6 +29,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
+from . import get_world_settings_model
 from .auth import SUPERUSER_PERM
 from .forms.menu import FixedURLEntryForm
 from .gui import menu, quick_forms
@@ -74,7 +75,6 @@ class TrashEntry(menu.FixedURLEntry):
     """Menu entry rendering as a link to the Creme trash."""
     id = 'creme_core-trash'
     label = _('Trash')
-
     url_name = 'creme_core__trash'
 
     def render(self, context):
@@ -94,6 +94,18 @@ class TrashEntry(menu.FixedURLEntry):
                 '{count} entities',
                 count,
             ).format(count=count),
+        )
+
+
+class PasswordChangeEntry(menu.FixedURLEntry):
+    id = 'creme_core-password'
+    label = _('Change password')
+    url_name = 'creme_core__change_own_password'
+
+    def _has_perm(self, context):
+        return (
+            super()._has_perm(context)
+            and get_world_settings_model().objects.get().password_change_enabled
         )
 
 
@@ -117,6 +129,7 @@ class CremeEntry(menu.ContainerEntry):
         UserSeparatorEntry,
         MyPageEntry,
         MyJobsEntry,
+        PasswordChangeEntry,
         menu.Separator1Entry,  # End of "user" group
         LogoutEntry,
     ]
